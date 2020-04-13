@@ -13,8 +13,25 @@ const controller = {
             current stored in the database.
     */
     getIndex: function(req, res) {
-        // your code here
-        res.render('home'); // This is to load the page initially
+        var projection = 'name number';
+
+        db.findMany(User, {}, projection, function(result) {
+            var contacts = [];
+            if (result != null) {
+                for (var i = 0; i < result.length; i++){
+                    var output = {
+                        name: result[i].name,
+                        number: result[i].number
+                    };
+                    contacts.push(output);
+                }
+                res.render('home', contacts);
+            }
+            else {
+                res.render('home');
+            }
+        });
+
     },
 
     /*
@@ -25,7 +42,11 @@ const controller = {
             number, otherwise, it returns an empty string.
     */
     getCheckNumber: function(req, res) {
-        // your code here
+        var number = req.query.number;
+
+        db.findOne(User, {number: number}, 'number', function (result) {
+            res.send(result);
+        });
     },
 
     /*
@@ -35,7 +56,19 @@ const controller = {
             list of contacts in `home.hbs`.
     */
     getAdd: function(req, res) {
-        // your code here
+        var contact = {
+            name: req.query.name,
+            number: req.query.number
+        }
+
+        db.insertOne(User, contact, function(flag){
+            if (flag){
+                console.log("ADDED");
+                res.render('partials/card', {name: contact.name, number: contact.number}, function(err, html){
+                    if (!err) res.send(html);
+                });
+            }
+        });
     },
 
     /*
@@ -45,7 +78,14 @@ const controller = {
             contacts in `home.hbs`.
     */
     getDelete: function (req, res) {
-        // your code here
+
+        var number = req.query.number;
+        var query = {number: number};
+
+        db.deleteOne(User, query, function(flag){
+            if (flag)
+                console.log("REMOVED");
+        });
     }
 
 }
